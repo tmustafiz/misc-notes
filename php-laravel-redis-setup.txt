@@ -1,0 +1,50 @@
+sudo apt update
+sudo apt install -y php php-cli php-xml php-mbstring unzip curl git
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# (optional) Create a new Laravel project
+composer create-project laravel/laravel my-app
+cd my-app
+
+
+2. Install and Enable phpredis Extension
+
+sudo apt install -y php-pear php-dev
+sudo pecl install redis
+
+# Enable in php.ini (for all SAPIs)
+echo "extension=redis.so" | sudo tee -a /etc/php/*/cli/php.ini
+echo "extension=redis.so" | sudo tee -a /etc/php/*/fpm/php.ini
+
+
+REDIS_CLIENT=phpredis
+REDIS_CLUSTER=redis
+REDIS_HOST=your-redis-cluster.xxxxxx.use1.cache.amazonaws.com
+REDIS_PASSWORD=your_token_or_acl_password
+#REDIS_USERNAME=your_acl_user  # Uncomment only if using ACL user
+REDIS_PORT=6379
+REDIS_USE_TLS=true
+REDIS_DB=0
+
+
+4. update config/database.php 
+'redis' => [
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'clusters' => [
+        'default' => [
+            [
+                'host' => env('REDIS_HOST', '127.0.0.1'),
+                'port' => env('REDIS_PORT', 6379),
+                'password' => env('REDIS_PASSWORD', null),
+                'username' => env('REDIS_USERNAME', null), // if ACL user
+                'scheme' => env('REDIS_USE_TLS', false) ? 'tls' : 'tcp',
+            ],
+        ],
+    ],
+
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'), // Important: use 'redis' for AWS Cluster Mode
+    ],
+],
