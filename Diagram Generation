@@ -1,0 +1,40 @@
+from diagrams import Diagram, Cluster
+from diagrams.aws.compute import EKS, EC2, AutoScaling
+from diagrams.aws.network import NLB, VPCElasticNetworkInterface
+from diagrams.aws.general import AvailabilityZone
+
+with Diagram("EKS with Auto Scaling", show=False, direction="TB"):
+    # Central NLB
+    nlb = NLB("Network Load Balancer\n(app subnet)")
+    
+    # Auto Scaling Group representation
+    with Cluster("Auto Scaling Group"):
+        with Cluster("Availability Zone 1"):
+            az1 = AvailabilityZone("AZ 1")
+            with Cluster("App Subnet"):
+                eni_az1 = VPCElasticNetworkInterface("ENI")
+                # Array of worker nodes
+                workers_az1 = [EC2("Worker Node") for _ in range(2)]
+                eni_az1 >> workers_az1
+
+        with Cluster("Availability Zone 2"):
+            az2 = AvailabilityZone("AZ 2")
+            with Cluster("App Subnet"):
+                eni_az2 = VPCElasticNetworkInterface("ENI")
+                # Array of worker nodes
+                workers_az2 = [EC2("Worker Node") for _ in range(2)]
+                eni_az2 >> workers_az2
+
+    # EKS control plane
+    eks = EKS("EKS Control Plane")
+    
+    # Connections
+    nlb >> eni_az1
+    nlb >> eni_az2
+    workers_az1 >> eks
+    workers_az2 >> eks
+    
+    # Auto Scaling service connection
+    asg = AutoScaling("Auto Scaling Service")
+    asg >> workers_az1
+    asg >> workers_az2
